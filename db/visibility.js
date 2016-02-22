@@ -12,15 +12,16 @@ module.exports.get = function(teamId, puzzleId, cb) {
         return cb(err);
       }
       if (!row) {
-        return cb(null, status.VISIBILITY_DEFAULT);
+        return cb(null, status.VisibilityStatus.getDefault());
       }
-      return cb(null, row.status);
+      return cb(null, new status.VisibilityStatus(row.status));
     });
 }
 
-module.exports.update = function(teamId, puzzleId, visibility, callback) {
+module.exports.update = function(teamId, puzzleId, visibilityStatus, callback) {
   async.waterfall([
     (cb) => {
+      // Create row with default visibility status, if it doesn't already exist.
       db.run(
         'INSERT OR IGNORE INTO visibilities (teamId, puzzleId) ' +
           'VALUES (?, ?)',
@@ -28,7 +29,7 @@ module.exports.update = function(teamId, puzzleId, visibility, callback) {
         cb);
     },
     (cb) => {
-      var allowedAntecedents = status.visibilityAllowedAntecedents(visibility);
+      var allowedAntecedents = visibilityStatus.getAllowedAntecedentValues();
       var antecedentCondition = _.map(
         allowedAntecedents,
         (value) => { return 'status = "' + value + '"'; })
@@ -37,7 +38,7 @@ module.exports.update = function(teamId, puzzleId, visibility, callback) {
         'UPDATE visibilities SET status = ? ' +
           'WHERE teamId = ? AND puzzleId = ? AND (' +
           antecedentCondition + ')',
-        [visibility, teamId, puzzleId],
+        [visibilityStatus.value, teamId, puzzleId],
         function(err) {
           if (err) {
             return cb(err);

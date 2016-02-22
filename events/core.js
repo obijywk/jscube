@@ -30,7 +30,7 @@ eventEmitter.on('FullRelease', (params) => {
         dbVisibility.update(
           teamId,
           params.puzzleId,
-          status.Visibility.UNLOCKED,
+          new status.VisibilityStatus('UNLOCKED'),
           cb);
       }, cb);
     }], (err) => {

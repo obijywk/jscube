@@ -24,7 +24,7 @@ router.post('/', (req, res) => {
       dbVisibility.get(req.body.teamId, req.body.puzzleId, cb);
     },
     (visibilityStatus, cb) => {
-      if (!status.visibilityAllowSubmission(visibilityStatus)) {
+      if (!visibilityStatus.allowSubmission()) {
         return cb('Puzzle visibility insufficient for submission');
       }
       db.run(
@@ -56,8 +56,7 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/:id', (req, res) => {
-  // TODO: ensure status is valid (shouldn't this be enforced with a reference
-  // table in the SQL schema and a foreign key constriant?)
+  var submissionStatus = new status.SubmissionStatus(req.body.status);
   db.run(
     'UPDATE submissions SET status = ? WHERE submissionId = ? AND status <> ?',
     [req.body.status, req.params.id, req.body.status],
@@ -65,7 +64,7 @@ router.post('/:id', (req, res) => {
       if (err) {
         return res.status(400).send(err);
       }
-      if (this.changes > 0 && status.submissionIsTerminal(req.body.status)) {
+      if (this.changes > 0 && submissionStatus.isTerminal()) {
         eventEmitter.emit(
           'SubmissionComplete', {'submissionId': req.params.id});
         res.json({'updated': true});
