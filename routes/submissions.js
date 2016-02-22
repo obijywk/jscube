@@ -65,8 +65,15 @@ router.post('/:id', (req, res) => {
         return res.status(400).send(err);
       }
       if (this.changes > 0 && submissionStatus.isTerminal()) {
-        eventEmitter.emit(
-          'SubmissionComplete', {'submissionId': req.params.id});
+        db.get(
+          'SELECT * FROM submissions WHERE submissionId = ?',
+          [req.params.id],
+          (err, row) => {
+            if (err || row === undefined) {
+              return console.log('Failed to get submission ' + req.params.id);
+            }
+            eventEmitter.emit('SubmissionComplete', row);
+          });
         res.json({'updated': true});
       } else {
         res.json({'updated': false});

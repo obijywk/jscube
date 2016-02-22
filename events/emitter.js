@@ -1,11 +1,14 @@
+'use strict';
+
 var EventEmitter = require('events');
 var util = require('util');
 
-function HuntEventEmitter() {
-  EventEmitter.call(this);
+class HuntEventEmitter extends EventEmitter {
+  emit(eventType, arg) {
+    util.log('Event: ' + eventType + ': ' + JSON.stringify(arg));
+    super.emit(eventType, arg);
+  }
 }
-util.inherits(HuntEventEmitter, EventEmitter);
 
-var emitter = new HuntEventEmitter();
+module.exports = new HuntEventEmitter();
 
-module.exports = emitter;

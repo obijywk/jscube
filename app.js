@@ -5,7 +5,8 @@ var express = require('express');
 var morgan = require('morgan');
 
 var app = express();
-app.use(morgan('short'));
+app.use(morgan(
+  ':date[iso] :remote-addr :remote-user :method :url :status :res[content-length] - :response-time ms'));
 app.use(bodyParser.json());
 app.use('/events', require('./routes/events'));
 app.use('/submissions', require('./routes/submissions'));
