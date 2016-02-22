@@ -21,19 +21,11 @@ eventEmitter.on('HuntStart', (params) => {
 });
 
 eventEmitter.on('FullRelease', (params) => {
-  async.waterfall([
-    (cb) => {
-      dbTeams.listIds(params.runId, cb);
-    },
-    (teamIds, cb) => {
-      async.each(teamIds, (teamId, cb) => {
-        dbVisibility.update(
-          teamId,
-          params.puzzleId,
-          new status.VisibilityStatus('UNLOCKED'),
-          cb);
-      }, cb);
-    }], (err) => {
+  dbVisibility.updateForAllTeams(
+    params.runId,
+    params.puzzleId,
+    new status.VisibilityStatus('UNLOCKED'),
+    (err) => {
       if (err) {
         console.log('FullRelease failed: ' + err);
       }

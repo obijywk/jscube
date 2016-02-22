@@ -2,7 +2,8 @@
   "jscube": {
     "port": 8080,
     "eventHandlers": [
-      "./events/core"
+      "./events/core",
+      "./hunts/linearexample"
     ]
   }
 }

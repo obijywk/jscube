@@ -1,6 +1,7 @@
 var _ = require('underscore');
 var async = require('async');
 var db = require('./db');
+var dbTeams = require('./teams');
 var status = require('../util/status');
 
 module.exports.get = function(teamId, puzzleId, cb) {
@@ -45,5 +46,22 @@ module.exports.update = function(teamId, puzzleId, visibilityStatus, callback) {
           }
           return cb(null, this.changes > 0);
         });
+    }], callback);
+}
+
+module.exports.updateForAllTeams = function(
+  runId, puzzleId, visibilityStatus, callback) {
+  async.waterfall([
+    (cb) => {
+      dbTeams.listIds(runId, cb);
+    },
+    (teamIds, cb) => {
+      async.each(teamIds, (teamId, cb) => {
+        module.exports.update(
+          teamId,
+          puzzleId,
+          visibilityStatus,
+          cb);
+      }, cb);
     }], callback);
 }
