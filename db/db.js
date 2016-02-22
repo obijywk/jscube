@@ -66,25 +66,20 @@ db.serialize(() => {
   for (var i = 0; i < 10; i++) {
     insertPuzzle.run('puzzle' + i );
   }
+  insertPuzzle.finalize();
 
   var insertTeam = db.prepare(
     'INSERT INTO teams (teamId, runId) ' +
       'VALUES (?, "development")');
-  var insertPhoneProperty = db.prepare(
-    'INSERT INTO team_properties (teamId, propertyKey, propertyValue) ' +
-      'VALUES (?, "phone", ?)');
   var insertVisibility = db.prepare(
     'INSERT INTO visibilities (teamId, puzzleId, status) VALUES (?, "puzzle0", "UNLOCKED")');
   for (var i = 0; i < 10; i++) {
     var teamId = 'testerteam' + i;
     insertTeam.run(teamId);
-    insertPhoneProperty.run(
-      'testerteam' + i,
-      JSON.stringify(['555-1212']));
     insertVisibility.run(teamId);
   }
   insertTeam.finalize();
-  insertPhoneProperty.finalize();
+  insertVisibility.finalize();
 });
 
 module.exports = db;

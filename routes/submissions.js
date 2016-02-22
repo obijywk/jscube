@@ -1,6 +1,7 @@
 var _ = require('underscore');
 var async = require('async');
 var db = require('../db/db');
+var eventEmitter = require('../events/emitter');
 var express = require('express');
 var status = require('../util/status');
 
@@ -82,7 +83,8 @@ router.post('/:id', (req, res) => {
         return res.status(400).send(err);
       }
       if (this.changes > 0 && status.submissionIsTerminal(req.body.status)) {
-        // TODO: emit event
+        eventEmitter.emit(
+          'submissionComplete', {'submissionId': req.params.id});
         res.json({'updated': true});
       } else {
         res.json({'updated': false});
