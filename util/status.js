@@ -25,4 +25,16 @@ if (config.has('jscube.hunt.visibilityStatusSet')) {
   module.exports.visibilityAllowSubmission = (visibility) => {
     return _.contains(['UNLOCKED'], visibility);
   }
+  module.exports.visibilityAllowedAntecedents = (visibility) => {
+    switch (visibility) {
+    case 'INVISIBLE':
+      return [];
+    case 'VISIBLE':
+      return ['INVISIBLE'];
+    case 'UNLOCKED':
+      return ['INVISIBLE', 'VISIBLE'];
+    case 'SOLVED':
+      return ['UNLOCKED'];
+    }
+  }
 }

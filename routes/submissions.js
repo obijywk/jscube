@@ -1,6 +1,6 @@
-var _ = require('underscore');
 var async = require('async');
 var db = require('../db/db');
+var dbVisibility = require('../db/visibility');
 var eventEmitter = require('../events/emitter');
 var express = require('express');
 var status = require('../util/status');
@@ -21,26 +21,9 @@ router.get('/', (req, res) => {
 router.post('/', (req, res) => {
   async.waterfall([
     (cb) => {
-      db.get(
-        'SELECT status FROM visibilities WHERE teamId = ? AND puzzleId = ?',
-        [req.body.teamId, req.body.puzzleId],
-        cb);
+      dbVisibility.get(req.body.teamId, req.body.puzzleId, cb);
     },
-    (visibilityRow, cb) => {
-      // TODO: we need to do this because waterfall can't tell the difference
-      // between an undefined arg and the absence of an arg. Find a cleaner
-      // solution here (probably write a helper for the visibility check).
-      if (cb === undefined) {
-        // There was no visibility row.
-        cb = visibilityRow;
-        visibilityRow = undefined;
-      }
-      var visibilityStatus;
-      if (visibilityRow) {
-        visibilityStatus = visibilityRow.status;
-      } else {
-        visibilityStatus = status.VISIBILITY_DEFAULT;
-      }
+    (visibilityStatus, cb) => {
       if (!status.visibilityAllowSubmission(visibilityStatus)) {
         return cb('Puzzle visibility insufficient for submission');
       }
