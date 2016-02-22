@@ -1,5 +1,8 @@
 {
   "jscube": {
-    "port": 8080
+    "port": 8080,
+    "eventHandlers": [
+      "./events/core"
+    ]
   }
 }

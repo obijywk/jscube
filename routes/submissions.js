@@ -84,7 +84,7 @@ router.post('/:id', (req, res) => {
       }
       if (this.changes > 0 && status.submissionIsTerminal(req.body.status)) {
         eventEmitter.emit(
-          'submissionComplete', {'submissionId': req.params.id});
+          'SubmissionComplete', {'submissionId': req.params.id});
         res.json({'updated': true});
       } else {
         res.json({'updated': false});
