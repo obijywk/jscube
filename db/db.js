@@ -1,8 +1,10 @@
 var sqlite3 = require('sqlite3').verbose();
+var status = require('../util/status');
 
 var db = new sqlite3.Database(':memory:');
 
 db.serialize(() => {
+  db.run('PRAGMA foreign_keys = ON');
   db.run(
     'CREATE TABLE IF NOT EXISTS runs (' +
       'runId VARCHAR(20), ' +
@@ -21,20 +23,65 @@ db.serialize(() => {
       'propertyValue BLOB, ' +
       'PRIMARY KEY(teamId, propertyKey), ' +
       'FOREIGN KEY(teamId) REFERENCES teams(teamId))');
+  db.run(
+    'CREATE TABLE IF NOT EXISTS puzzles (' +
+      'puzzleId VARCHAR(40), ' +
+      'PRIMARY KEY(puzzleId ASC))');
+  db.run(
+    'CREATE TABLE IF NOT EXISTS submissions (' +
+      'submissionId INTEGER, ' +
+      'puzzleId VARCHAR(40), ' +
+      'teamId VARCHAR(20), ' +
+      'submission TEXT, ' +
+      'timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, ' +
+      'status VARCHAR(10) DEFAULT "' + status.SUBMISSION_DEFAULT + '", ' +
+      'PRIMARY KEY(submissionId ASC), ' +
+      'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +
+      'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId))');
+  db.run(
+    'CREATE TABLE IF NOT EXISTS visibilities (' +
+      'teamId VARCHAR(20), ' +
+      'puzzleId VARCHAR(20), ' +
+      'status VARCHAR(10) DEFAULT "' + status.VISIBILITY_DEFAULT + '", ' +
+      'PRIMARY KEY(teamId, puzzleId), ' +
+      'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +
+      'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId))');
+  db.run(
+    'CREATE TABLE IF NOT EXISTS visibility_history (' +
+      'visibilityHistoryId INTEGER, ' +
+      'teamId VARCHAR(20), ' +
+      'puzzleId VARCHAR(20), ' +
+      'status VARCHAR(10) DEFAULT "' + status.VISIBILITY_DEFAULT + '", ' +
+      'timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, ' +
+      'PRIMARY KEY(visibilityHistoryId ASC), ' +
+      'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +
+      'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId))');
 
   // Insert some test data.
+
   db.run('INSERT INTO runs (runId) VALUES ("development")');
+
+  var insertPuzzle = db.prepare(
+    'INSERT INTO puzzles (puzzleId) VALUES (?)');
+  for (var i = 0; i < 10; i++) {
+    insertPuzzle.run('puzzle' + i );
+  }
+
   var insertTeam = db.prepare(
     'INSERT INTO teams (teamId, runId) ' +
       'VALUES (?, "development")');
   var insertPhoneProperty = db.prepare(
     'INSERT INTO team_properties (teamId, propertyKey, propertyValue) ' +
       'VALUES (?, "phone", ?)');
+  var insertVisibility = db.prepare(
+    'INSERT INTO visibilities (teamId, puzzleId, status) VALUES (?, "puzzle0", "UNLOCKED")');
   for (var i = 0; i < 10; i++) {
-    insertTeam.run('testerteam' + i);
+    var teamId = 'testerteam' + i;
+    insertTeam.run(teamId);
     insertPhoneProperty.run(
       'testerteam' + i,
       JSON.stringify(['555-1212']));
+    insertVisibility.run(teamId);
   }
   insertTeam.finalize();
   insertPhoneProperty.finalize();
