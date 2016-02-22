@@ -1,12 +1,21 @@
+var db = require('../db/db');
 var express = require('express');
 
 var router = express.Router();
 
 router.get('/:id', (req, res) => {
-  res.json({
-    'teamId': req.params.id,
-    'runId': 'placeholderRunId',
-  });
+  db.get(
+    'SELECT teamId, runId FROM teams WHERE teamId = ?',
+    [req.params.id],
+    (err, row) => {
+      if (err) {
+        return res.status(500).send(err);
+      }
+      if (row === undefined) {
+        return res.status(404).send();
+      }
+      res.json(row);
+    });
 });
 
 module.exports = router;
