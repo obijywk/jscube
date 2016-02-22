@@ -23,6 +23,7 @@ db.serialize(() => {
       'FOREIGN KEY(teamId) REFERENCES teams(teamId))');
 
   // Insert some test data.
+  db.run('INSERT INTO runs (runId) VALUES ("development")');
   var insertTeam = db.prepare(
     'INSERT INTO teams (teamId, runId) ' +
       'VALUES (?, "development")');
