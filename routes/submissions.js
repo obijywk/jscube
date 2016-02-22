@@ -26,6 +26,9 @@ router.post('/', (req, res) => {
         cb);
     },
     (visibilityRow, cb) => {
+      // TODO: we need to do this because waterfall can't tell the difference
+      // between an undefined arg and the absence of an arg. Find a cleaner
+      // solution here (probably write a helper for the visibility check).
       if (cb === undefined) {
         // There was no visibility row.
         cb = visibilityRow;
@@ -50,6 +53,40 @@ router.post('/', (req, res) => {
         return res.status(400).send(err);
       }
       res.json({'created': true});
+    });
+});
+
+router.get('/:id', (req, res) => {
+  db.get(
+    'SELECT * FROM submissions WHERE submissionId = ?',
+    [req.params.id],
+    (err, row) => {
+      if (err) {
+        return res.status(500).send(err);
+      }
+      if (row === undefined) {
+        return res.status(404).send('Submission not found');
+      }
+      res.json(row);
+    });
+});
+
+router.post('/:id', (req, res) => {
+  // TODO: ensure status is valid (shouldn't this be enforced with a reference
+  // table in the SQL schema and a foreign key constriant?)
+  db.run(
+    'UPDATE submissions SET status = ? WHERE submissionId = ? AND status <> ?',
+    [req.body.status, req.params.id, req.body.status],
+    function(err) {
+      if (err) {
+        return res.status(400).send(err);
+      }
+      if (this.changes > 0 && status.submissionIsTerminal(req.body.status)) {
+        // TODO: emit event
+        res.json({'updated': true});
+      } else {
+        res.json({'updated': false});
+      }
     });
 });
 

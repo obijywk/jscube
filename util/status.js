@@ -1,3 +1,4 @@
+var _ = require('underscore');
 var config = require('config');
 
 module.exports.Submission = {
@@ -7,6 +8,9 @@ module.exports.Submission = {
   'CORRECT': 'CORRECT',
 };
 module.exports.SUBMISSION_DEFAULT = module.exports.Submission.SUBMITTED;
+module.exports.submissionIsTerminal = (submission) => {
+  return _.contains(['INCORRECT', 'CORRECT'], submission);
+}
 
 if (config.has('jscube.hunt.visibilityStatusSet')) {
   // TODO: load visibility status set based on config
@@ -19,6 +23,6 @@ if (config.has('jscube.hunt.visibilityStatusSet')) {
   };
   module.exports.VISIBILITY_DEFAULT = module.exports.Visibility.INVISIBLE;
   module.exports.visibilityAllowSubmission = (visibility) => {
-    return visibility == module.exports.Visibility.UNLOCKED;
+    return _.contains(['UNLOCKED'], visibility);
   }
 }

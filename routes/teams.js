@@ -22,7 +22,7 @@ router.get('/:id', (req, res) => {
       }
       var resource = results[0];
       if (resource === undefined) {
-        return res.status(404).send();
+        return res.status(404).send('Team not found');
       }
       _.each(results[1], (row) => {
         resource[row.propertyKey] = JSON.parse(row.propertyValue);
