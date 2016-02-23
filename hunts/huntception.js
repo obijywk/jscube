@@ -38,13 +38,19 @@ var CASCADING_UNLOCKS = {
   'dreamtime': ['dreamtime_day_one'],
 };
 
+var SOLVE_UNLOCK = {
+  'dog_show': 'rip_van_winkle',
+};
+
 eventEmitter.on('VisibilityChange', (visibility) => {
-  if (visibility.status != status.Visibility.UNLOCKED) {
-    return;
-  }
-  var puzzleIdsToUnlock = CASCADING_UNLOCKS[visibility.puzzleId];
-  if (!puzzleIdsToUnlock) {
-    return;
+  var puzzleIdsToUnlock = [];
+  switch (visibility.status) {
+  case status.Visibility.UNLOCKED:
+    puzzleIdsToUnlock = CASCADING_UNLOCKS[visibility.puzzleId];
+    break;
+  case status.Visibility.SOLVED:
+    puzzleIdsToUnlock = [SOLVE_UNLOCK[visibility.puzzleId]];
+    break;
   }
   _.each(puzzleIdsToUnlock, (puzzleIdToUnlock) => {
     dbVisibility.update(
@@ -57,29 +63,6 @@ eventEmitter.on('VisibilityChange', (visibility) => {
         }
       });
   });
-});
-
-var SOLVE_UNLOCK = {
-  'dog_show': 'rip_van_winkle',
-};
-
-eventEmitter.on('SubmissionComplete', (submission) => {
-  if (submission.status != status.Submission.CORRECT) {
-    return;
-  }
-  var puzzleIdToUnlock = SOLVE_UNLOCK[submission.puzzleId];
-  if (!puzzleIdToUnlock) {
-    return;
-  }
-  dbVisibility.update(
-    submission.teamId,
-    puzzleIdToUnlock,
-    status.Visibility.UNLOCKED,
-    (err) => {
-      if (err) {
-        throw err;
-      }
-    });
 });
 
 // All times are offsets from the hunt start time.

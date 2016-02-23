@@ -37,16 +37,16 @@ const SOLVE_UNLOCK = {
   'puzzle6': 'puzzle7',
 };
 
-eventEmitter.on('SubmissionComplete', (submission) => {
-  if (submission.status != status.Submission.CORRECT) {
+eventEmitter.on('VisibilityChange', (visibility) => {
+  if (visibility.status != status.Visibility.SOLVED) {
     return;
   }
-  var puzzleIdToUnlock = SOLVE_UNLOCK[submission.puzzleId];
+  var puzzleIdToUnlock = SOLVE_UNLOCK[visibility.puzzleId];
   if (!puzzleIdToUnlock) {
     return;
   }
   dbVisibility.update(
-    submission.teamId,
+    visibility.teamId,
     puzzleIdToUnlock,
     status.Visibility.UNLOCKED,
     (err) => {

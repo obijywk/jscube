@@ -20,6 +20,21 @@ eventEmitter.on('HuntStart', (params) => {
     });
 });
 
+eventEmitter.on('SubmissionComplete', (submission) => {
+  if (submission.status != status.Submission.CORRECT) {
+    return;
+  }
+  dbVisibility.update(
+    submission.teamId,
+    submission.puzzleId,
+    status.Visibility.SOLVED,
+    (err) => {
+      if (err) {
+        throw err;
+      }
+    });
+});
+
 eventEmitter.on('FullRelease', (params) => {
   dbTeams.forEachTeamId(params.runId, (teamId) => {
     dbVisibility.update(
