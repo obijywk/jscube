@@ -3,7 +3,7 @@ A web service backend managing submissions for and status of a puzzle hunt. Node
 
 ## How to run
 
-First, make sure you have https://nodejs.org/en/download/stable/[Node v5] set up. Then run the following commands:
+First, make sure you have [Node.js v5](https://nodejs.org/en/download/stable/) set up. Then run the following commands:
 
 ```
 git clone https://github.com/obijywk/jscube
