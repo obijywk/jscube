@@ -17,3 +17,6 @@ _.each(config.get('jscube.eventHandlers'), (handler) => {
 });
 
 app.listen(config.get('jscube.port'));
+
+// Exported for tests.
+module.exports.app = app;
