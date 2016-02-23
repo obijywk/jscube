@@ -1,4 +1,5 @@
 var dbPuzzles = require('../db/puzzles');
+var dbTeams = require('../db/teams');
 var dbVisibility = require('../db/visibility');
 var eventEmitter = require('../events/emitter');
 var status = require('../util/status');
@@ -14,18 +15,20 @@ dbPuzzles.create([
 ]);
 
 eventEmitter.on('HuntStart', (params) => {
-  dbVisibility.updateForAllTeams(
-    params.runId,
-    'puzzle1',
-    new status.VisibilityStatus('UNLOCKED'),
-    (err) => {
-      if (err) {
-        console.log('LinearExample puzzle1 unlock failed: ' + err);
-      }
-    });
+  dbTeams.forEachTeamId(params.runId, (teamId) => {
+    dbVisibility.update(
+      teamId,
+      'puzzle1',
+      status.Visibility.UNLOCKED,
+      (err) => {
+        if (err) {
+          throw err;
+        }
+      });
+  });
 });
 
-var nextPuzzle = {
+const SOLVE_UNLOCK = {
   'puzzle1': 'puzzle2',
   'puzzle2': 'puzzle3',
   'puzzle3': 'puzzle4',
@@ -35,23 +38,20 @@ var nextPuzzle = {
 };
 
 eventEmitter.on('SubmissionComplete', (submission) => {
-  if (submission.status != 'CORRECT') {
+  if (submission.status != status.Submission.CORRECT) {
     return;
   }
-  var puzzleIdToUnlock = nextPuzzle[submission.puzzleId];
+  var puzzleIdToUnlock = SOLVE_UNLOCK[submission.puzzleId];
   if (!puzzleIdToUnlock) {
     return;
   }
   dbVisibility.update(
     submission.teamId,
     puzzleIdToUnlock,
-    new status.VisibilityStatus('UNLOCKED'),
+    status.Visibility.UNLOCKED,
     (err) => {
       if (err) {
-        console.log(
-          'LinearExample ' +
-            submission.teamId + ' ' + puzzleIdToUnlock +
-            ' unlock failed: ' + err);
+        throw err;
       }
     });
 });

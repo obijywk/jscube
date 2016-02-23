@@ -3,7 +3,7 @@
     "port": 8080,
     "eventHandlers": [
       "./events/core",
-      "./hunts/linearexample"
+      "./hunts/huntception"
     ]
   }
 }

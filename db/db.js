@@ -34,7 +34,7 @@ db.serialize(() => {
       'teamId VARCHAR(20), ' +
       'submission TEXT, ' +
       'timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, ' +
-      'status VARCHAR(10) DEFAULT "' + status.SubmissionStatus.getDefault().value + '", ' +
+      'status VARCHAR(10) DEFAULT "' + status.Submission.DEFAULT.key + '", ' +
       'PRIMARY KEY(submissionId ASC), ' +
       'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +
       'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId))');
@@ -42,7 +42,7 @@ db.serialize(() => {
     'CREATE TABLE IF NOT EXISTS visibilities (' +
       'teamId VARCHAR(20), ' +
       'puzzleId VARCHAR(20), ' +
-      'status VARCHAR(10) DEFAULT "' + status.VisibilityStatus.getDefault().value + '", ' +
+      'status VARCHAR(10) DEFAULT "' + status.Visibility.DEFAULT.key + '", ' +
       'PRIMARY KEY(teamId, puzzleId), ' +
       'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +
       'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId))');
@@ -51,7 +51,7 @@ db.serialize(() => {
       'visibilityHistoryId INTEGER, ' +
       'teamId VARCHAR(20), ' +
       'puzzleId VARCHAR(20), ' +
-      'status VARCHAR(10) DEFAULT "' + status.VisibilityStatus.getDefault().value + '", ' +
+      'status VARCHAR(10) DEFAULT "' + status.Visibility.DEFAULT.key + '", ' +
       'timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, ' +
       'PRIMARY KEY(visibilityHistoryId ASC), ' +
       'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +

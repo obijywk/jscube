@@ -1,74 +1,51 @@
-'use strict';
 var _ = require('underscore');
 var config = require('config');
+var Enum = require('enum');
 
-class SubmissionStatus {
-  static validValues() {
-    return [
-      'SUBMITTED',
-      'ASSIGNED',
-      'INCORRECT',
-      'CORRECT',
-    ];
-  }
+var Submission = new Enum([
+  'SUBMITTED',
+  'ASSIGNED',
+  'INCORRECT',
+  'CORRECT',
+]);
 
-  static getDefault() {
-    return new SubmissionStatus('SUBMITTED');
-  }
+Submission.SUBMITTED.isTerminal = false;
+Submission.ASSIGNED.isTerminal = false;
+Submission.INCORRECT.isTerminal = true;
+Submission.CORRECT.isTerminal = true;
 
-  constructor(value) {
-    if (!_.contains(SubmissionStatus.validValues(), value)) {
-      throw 'invalid SubmissionStatus value: ' + value;
-    }
-    this.value = value;
-  }
+Submission.DEFAULT = Submission.SUBMITTED;
 
-  isTerminal() {
-    return _.contains(['INCORRECT', 'CORRECT'], this.value);
-  }
-}
-module.exports.SubmissionStatus = SubmissionStatus;
+module.exports.Submission = Submission;
 
 if (config.has('jscube.hunt.visibilityStatusSet')) {
   // TODO: load visibility status set based on config
 } else {
-  class VisibilityStatus {
-    static validValues() {
-      return [
-        'INVISIBLE',
-        'VISIBLE',
-        'UNLOCKED',
-        'SOLVED',
-      ];
-    }
+  var Visibility = new Enum([
+    'INVISIBLE',
+    'VISIBLE',
+    'UNLOCKED',
+    'SOLVED',
+  ]);
 
-    static getDefault() {
-      return new VisibilityStatus('INVISIBLE');
-    }
+  Visibility.INVISIBLE.allowSubmission = false;
+  Visibility.VISIBLE.allowSubmission = false;
+  Visibility.UNLOCKED.allowSubmission = true;
+  Visibility.SOLVED.allowSubmission = false;
 
-    constructor(value) {
-      if (!_.contains(VisibilityStatus.validValues(), value)) {
-        throw 'invalid VisibilityStatus value: ' + value;
-      }
-      this.value = value;
-    }
+  Visibility.INVISIBLE.allowedAntecedents = [];
+  Visibility.VISIBLE.allowedAntecedents = [
+    Visibility.INVISIBLE,
+  ];
+  Visibility.UNLOCKED.allowedAntecedents = [
+    Visibility.INVISIBLE,
+    Visibility.VISIBLE,
+  ];
+  Visibility.SOLVED.allowedAntecedents = [
+    Visibility.UNLOCKED,
+  ];
 
-    allowSubmission() {
-      return _.contains(['UNLOCKED'], this.value);
-    }
+  Visibility.DEFAULT = Visibility.INVISIBLE;
 
-    getAllowedAntecedentValues() {
-      switch (this.value) {
-      case 'INVISIBLE':
-        return [];
-      case 'VISIBLE':
-        return ['INVISIBLE'];
-      case 'UNLOCKED':
-        return ['INVISIBLE', 'VISIBLE'];
-      case 'SOLVED':
-        return ['UNLOCKED'];
-      }
-    }
-  }
-  module.exports.VisibilityStatus = VisibilityStatus;
+  module.exports.Visibility = Visibility;
 }

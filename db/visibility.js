@@ -1,10 +1,10 @@
 var _ = require('underscore');
 var async = require('async');
 var db = require('./db');
-var dbTeams = require('./teams');
+var eventEmitter = require('../events/emitter');
 var status = require('../util/status');
 
-module.exports.get = function(teamId, puzzleId, cb) {
+function getVisibility(teamId, puzzleId, cb) {
   db.get(
     'SELECT status FROM visibilities WHERE teamId = ? AND puzzleId = ?',
     [teamId, puzzleId],
@@ -13,13 +13,14 @@ module.exports.get = function(teamId, puzzleId, cb) {
         return cb(err);
       }
       if (!row) {
-        return cb(null, status.VisibilityStatus.getDefault());
+        return cb(null, status.Visibility.DEFAULT);
       }
-      return cb(null, new status.VisibilityStatus(row.status));
+      return cb(null, status.Visibility.get(row.status));
     });
 }
+module.exports.get = getVisibility;
 
-module.exports.update = function(teamId, puzzleId, visibilityStatus, callback) {
+function updateVisibility(teamId, puzzleId, visibility, callback) {
   async.waterfall([
     (cb) => {
       // Create row with default visibility status, if it doesn't already exist.
@@ -30,7 +31,7 @@ module.exports.update = function(teamId, puzzleId, visibilityStatus, callback) {
         cb);
     },
     (cb) => {
-      var allowedAntecedents = visibilityStatus.getAllowedAntecedentValues();
+      var allowedAntecedents = _.pluck(visibility.allowedAntecedents, 'key');
       var antecedentCondition = _.map(
         allowedAntecedents,
         (value) => { return 'status = "' + value + '"'; })
@@ -39,29 +40,36 @@ module.exports.update = function(teamId, puzzleId, visibilityStatus, callback) {
         'UPDATE visibilities SET status = ? ' +
           'WHERE teamId = ? AND puzzleId = ? AND (' +
           antecedentCondition + ')',
-        [visibilityStatus.value, teamId, puzzleId],
+        [visibility.key, teamId, puzzleId],
         function(err) {
           if (err) {
             return cb(err);
           }
           return cb(null, this.changes > 0);
         });
-    }], callback);
-}
-
-module.exports.updateForAllTeams = function(
-  runId, puzzleId, visibilityStatus, callback) {
-  async.waterfall([
-    (cb) => {
-      dbTeams.listIds(runId, cb);
     },
-    (teamIds, cb) => {
-      async.each(teamIds, (teamId, cb) => {
-        module.exports.update(
-          teamId,
-          puzzleId,
-          visibilityStatus,
-          cb);
-      }, cb);
+    (changed, cb) => {
+      if (changed) {
+        eventEmitter.emit('VisibilityChange', {
+          'teamId': teamId,
+          'puzzleId': puzzleId,
+          'status': visibility,
+        });
+        db.run(
+          'INSERT INTO visibility_history ' +
+            '(teamId, puzzleId, status, timestamp) ' +
+            'VALUES (?, ?, ?, ?)',
+          [teamId, puzzleId, visibility.key, Date.now()],
+          (err) => {
+            if (err) {
+              return cb(err);
+            } else {
+              return cb(null, true);
+            }
+          });
+      } else {
+        return cb(null, false);
+      }
     }], callback);
 }
+module.exports.update = updateVisibility;

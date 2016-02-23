@@ -21,13 +21,15 @@ eventEmitter.on('HuntStart', (params) => {
 });
 
 eventEmitter.on('FullRelease', (params) => {
-  dbVisibility.updateForAllTeams(
-    params.runId,
-    params.puzzleId,
-    new status.VisibilityStatus('UNLOCKED'),
-    (err) => {
-      if (err) {
-        console.log('FullRelease failed: ' + err);
-      }
-    });
+  dbTeams.forEachTeamId(params.runId, (teamId) => {
+    dbVisibility.update(
+      teamId,
+      params.puzzleId,
+      status.Visibility.UNLOCKED,
+      (err) => {
+        if (err) {
+          throw err;
+        }
+      });
+  });
 });

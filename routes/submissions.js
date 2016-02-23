@@ -1,19 +1,18 @@
 var async = require('async');
-var db = require('../db/db');
+var dbSubmission = require('../db/submission');
 var dbVisibility = require('../db/visibility');
-var eventEmitter = require('../events/emitter');
 var express = require('express');
 var status = require('../util/status');
 
 var router = express.Router();
 
 router.get('/', (req, res) => {
-  db.all('SELECT * FROM submissions', [], (err, rows) => {
+  dbSubmission.list((err, submissions) => {
     if (err) {
       return res.status(500).send(err);
     }
     res.json({
-      'submissions': rows,
+      'submissions': submissions,
     });
   });
 });
@@ -23,14 +22,14 @@ router.post('/', (req, res) => {
     (cb) => {
       dbVisibility.get(req.body.teamId, req.body.puzzleId, cb);
     },
-    (visibilityStatus, cb) => {
-      if (!visibilityStatus.allowSubmission()) {
+    (visibility, cb) => {
+      if (!visibility.allowSubmission) {
         return cb('Puzzle visibility insufficient for submission');
       }
-      db.run(
-        'INSERT INTO submissions (teamId, puzzleId, submission, timestamp) ' +
-          'VALUES (?,?,?,?)',
-        [req.body.teamId, req.body.puzzleId, req.body.submission, Date.now()],
+      dbSubmission.create(
+        req.body.teamId,
+        req.body.puzzleId,
+        req.body.submission,
         cb);
     }], (err) => {
       if (err) {
@@ -41,44 +40,22 @@ router.post('/', (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-  db.get(
-    'SELECT * FROM submissions WHERE submissionId = ?',
-    [req.params.id],
-    (err, row) => {
-      if (err) {
-        return res.status(500).send(err);
-      }
-      if (row === undefined) {
-        return res.status(404).send('Submission not found');
-      }
-      res.json(row);
-    });
+  dbSubmission.get(req.params.id, (err, submission) => {
+    if (err) {
+      return res.status(400).send(err);
+    }
+    res.json(submission);
+  });
 });
 
 router.post('/:id', (req, res) => {
-  var submissionStatus = new status.SubmissionStatus(req.body.status);
-  db.run(
-    'UPDATE submissions SET status = ? WHERE submissionId = ? AND status <> ?',
-    [req.body.status, req.params.id, req.body.status],
-    function(err) {
-      if (err) {
-        return res.status(400).send(err);
-      }
-      if (this.changes > 0 && submissionStatus.isTerminal()) {
-        db.get(
-          'SELECT * FROM submissions WHERE submissionId = ?',
-          [req.params.id],
-          (err, row) => {
-            if (err || row === undefined) {
-              return console.log('Failed to get submission ' + req.params.id);
-            }
-            eventEmitter.emit('SubmissionComplete', row);
-          });
-        res.json({'updated': true});
-      } else {
-        res.json({'updated': false});
-      }
-    });
+  var submissionStatus = status.Submission.get(req.body.status);
+  dbSubmission.updateStatus(req.params.id, submissionStatus, (err, updated) => {
+    if (err) {
+      return res.status(400).send(err);
+    }
+    res.json({'updated': updated});
+  });
 });
 
 module.exports = router;

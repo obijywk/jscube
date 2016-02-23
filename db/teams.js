@@ -1,14 +1,15 @@
 var _ = require('underscore');
 var db = require('./db');
+var util = require('util');
 
-module.exports.listIds = function(runId, cb) {
+module.exports.forEachTeamId = function(runId, cb) {
   db.all(
     'SELECT teamId FROM teams WHERE runId = ?',
     [runId],
     (err, rows) => {
       if (err) {
-        return cb(err);
+        throw err;
       }
-      return cb(null, _.pluck(rows, 'teamId'));
+      _.each(_.pluck(rows, 'teamId'), cb);
     });
 }
