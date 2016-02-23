@@ -4,6 +4,7 @@ var dbTeams = require('../db/teams');
 var dbVisibility = require('../db/visibility');
 var eventEmitter = require('./emitter');
 var status = require('../util/status');
+var util = require('util');
 
 eventEmitter.on('HuntStart', (params) => {
   db.run(
@@ -12,10 +13,10 @@ eventEmitter.on('HuntStart', (params) => {
     [Date.now(), params.runId],
     function(err) {
       if (err) {
-        console.log('HuntStart failed: ' + err);
+        throw err;
       }
       if (this.changes == 0) {
-        console.log('HuntStart did not cause an update');
+        util.log('HuntStart did not cause an update');
       }
     });
 });

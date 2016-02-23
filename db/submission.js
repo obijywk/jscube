@@ -29,7 +29,7 @@ function getSubmission(submissionId, cb) {
         return cb(err);
       }
       if (row === undefined) {
-        return cb('Submission id ' + submissionId + ' not found');
+        return cb(new Error('Submission id ' + submissionId + ' not found'));
       }
       row.status = status.Submission.get(row.status);
       return cb(null, row);

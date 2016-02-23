@@ -18,7 +18,7 @@ router.get('/:id', (req, res) => {
         [req.params.id], cb);
     }], (err, results) => {
       if (err) {
-        return res.status(500).send(err);
+        return res.status(500).send(err.message);
       }
       var resource = results[0];
       if (resource === undefined) {
