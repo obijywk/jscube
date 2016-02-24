@@ -6,16 +6,16 @@ var request = require('supertest');
 var testUtil = require('./util');
 
 before(testUtil.awaitInitialized(appModule));
-before(db.reset);
 
 describe('LinearExample hunt', function() {
+  before(db.reset);
   it('puzzle1 is locked', function(done) {
     request(app)
       .post('/submissions')
       .send({
-        teamId: "testerteam1",
-        puzzleId: "puzzle1",
-        submission: "ANSWER"
+        teamId: 'testerteam1',
+        puzzleId: 'puzzle1',
+        submission: 'ANSWER'
       })
       .expect(400, done);
   });
@@ -35,9 +35,9 @@ describe('LinearExample hunt', function() {
     request(app)
       .post('/submissions')
       .send({
-        teamId: "testerteam1",
-        puzzleId: "puzzle1",
-        submission: "ANSWER"
+        teamId: 'testerteam1',
+        puzzleId: 'puzzle1',
+        submission: 'ANSWER'
       })
       .expect(200, done);
   });
@@ -45,9 +45,9 @@ describe('LinearExample hunt', function() {
     request(app)
       .post('/submissions')
       .send({
-        teamId: "testerteam1",
-        puzzleId: "puzzle2",
-        submission: "ANSWER"
+        teamId: 'testerteam1',
+        puzzleId: 'puzzle2',
+        submission: 'ANSWER'
       })
       .expect(400, done);
   });
@@ -55,7 +55,7 @@ describe('LinearExample hunt', function() {
     request(app)
       .post('/submissions/1')
       .send({
-        status: "CORRECT",
+        status: 'CORRECT',
       })
       .expect(200, () => {
         setTimeout(done, 10);
@@ -65,9 +65,9 @@ describe('LinearExample hunt', function() {
     request(app)
       .post('/submissions')
       .send({
-        teamId: "testerteam1",
-        puzzleId: "puzzle2",
-        submission: "ANSWER"
+        teamId: 'testerteam1',
+        puzzleId: 'puzzle2',
+        submission: 'ANSWER'
       })
       .expect(200, done);
   });

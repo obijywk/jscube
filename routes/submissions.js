@@ -50,6 +50,10 @@ router.get('/:id', (req, res) => {
 
 router.post('/:id', (req, res) => {
   var submissionStatus = status.Submission.get(req.body.status);
+  if (submissionStatus === undefined) {
+    return res.status(400).send(
+      new Error('Unknown submission status ' + req.body.status));
+  }
   dbSubmission.updateStatus(req.params.id, submissionStatus, (err, updated) => {
     if (err) {
       return res.status(400).send(err.message);
