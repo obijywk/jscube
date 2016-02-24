@@ -7,6 +7,7 @@ var errorUtil = require('../util/error');
 var eventEmitter = require('../events/emitter');
 var moment = require('moment');
 var status = require('../util/status');
+var unlock = require('../util/unlock');
 
 function init(callback) {
   dbPuzzles.create([
@@ -23,42 +24,17 @@ function init(callback) {
 module.exports.init = init;
 
 eventEmitter.on('HuntStart', (params) => {
-  dbTeams.forEachTeamId(params.runId, (teamId) => {
-    dbVisibility.update(
-      teamId,
-      'dog_show',
-      status.Visibility.UNLOCKED,
-      errorUtil.thrower);
-  });
+  unlock.forAllTeams(params.runId, 'dog_show');
 });
 
-var CASCADING_UNLOCKS = {
+unlock.onUnlock({
   'dog_show': ['you_complete_me'],
   'rip_van_winkle': ['crimes_against_cruciverbalism'],
   'dreamtime': ['dreamtime_day_one'],
-};
+});
 
-var SOLVE_UNLOCK = {
-  'dog_show': 'rip_van_winkle',
-};
-
-eventEmitter.on('VisibilityChange', (visibility) => {
-  var puzzleIdsToUnlock = [];
-  switch (visibility.status) {
-  case status.Visibility.UNLOCKED:
-    puzzleIdsToUnlock = CASCADING_UNLOCKS[visibility.puzzleId];
-    break;
-  case status.Visibility.SOLVED:
-    puzzleIdsToUnlock = [SOLVE_UNLOCK[visibility.puzzleId]];
-    break;
-  }
-  _.each(puzzleIdsToUnlock, (puzzleIdToUnlock) => {
-    dbVisibility.update(
-      visibility.teamId,
-      puzzleIdToUnlock,
-      status.Visibility.UNLOCKED,
-      errorUtil.thrower);
-  });
+unlock.onSolve({
+  'dog_show': ['rip_van_winkle'],
 });
 
 // All times are offsets from the hunt start time.
@@ -82,13 +58,7 @@ function processTimedUnlocks(runId, startTimestamp) {
   var now = moment();
   _.each(TIMED_UNLOCKS, (timedUnlock) => {
     if (now.isAfter(moment(start).add(timedUnlock.timeOffset))) {
-      dbTeams.forEachTeamId(runId, (teamId) => {
-        dbVisibility.update(
-          teamId,
-          timedUnlock.puzzleId,
-          status.Visibility.UNLOCKED,
-          errorUtil.thrower);
-      });
+      unlock.forAllTeams(runId, timedUnlock.puzzleId);
     }
   });
 }

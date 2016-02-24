@@ -5,6 +5,7 @@ var dbVisibility = require('../db/visibility');
 var errorUtil = require('../util/error');
 var eventEmitter = require('./emitter');
 var status = require('../util/status');
+var unlock = require('../util/unlock');
 var util = require('util');
 
 eventEmitter.on('HuntStart', (params) => {
@@ -32,11 +33,5 @@ eventEmitter.on('SubmissionComplete', (submission) => {
 });
 
 eventEmitter.on('FullRelease', (params) => {
-  dbTeams.forEachTeamId(params.runId, (teamId) => {
-    dbVisibility.update(
-      teamId,
-      params.puzzleId,
-      status.Visibility.UNLOCKED,
-      errorUtil.thrower);
-  });
+  unlock.forAllTeams(params.runId, params.puzzleId);
 });

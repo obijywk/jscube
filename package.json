@@ -26,10 +26,14 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
+    "jsdoc": "^3.4.0",
     "mocha": "^2.4.5",
+    "sinon": "^1.17.3",
     "supertest": "^1.2.0"
   },
   "scripts": {
+    "jsdoc": "jsdoc -c jsdoc_conf.json -d docs -r .",
+    "start": "node app.js",
     "test": "NODE_ENV=unittest mocha test/"
   }
 }

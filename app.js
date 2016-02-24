@@ -21,7 +21,7 @@ app.use('/teams', require('./routes/teams'));
 var port = config.get('jscube.port');
 
 async.series([
-  (cb) => db.init(cb),
+  db.init,
   (cb) => {
     async.each(config.get('jscube.huntModules'), (module, cb) => {
       var m = require(module);
