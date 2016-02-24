@@ -85,7 +85,7 @@ function init(callback) {
         'PRIMARY KEY(visibilityHistoryId ASC), ' +
         'FOREIGN KEY(teamId) REFERENCES teams(teamId) ON DELETE CASCADE, ' +
         'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId) ON DELETE CASCADE)', cb),
-    (cb) => insertTestData(cb)
+    insertTestData
   ], callback);
 }
 module.exports.init = init;
