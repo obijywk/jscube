@@ -14,6 +14,22 @@ if (config.has('jscube.debug.sqlite')) {
   });
 }
 
+function insertTestData(callback) {
+  async.series([
+    (cb) => db.query(
+      'INSERT INTO runs (runId) VALUES ("development")', cb),
+    (cb) => {
+      async.times(10, (i, cb) => {
+        var teamId = 'testerteam' + i;
+        db.query(
+          'INSERT INTO teams (teamId, runId) ' +
+            'VALUES (?, "development")',
+          [teamId],
+          cb);
+      }, cb);
+    }], callback);
+}
+
 function init(callback) {
   async.series([
     (cb) => db.query(
@@ -28,14 +44,14 @@ function init(callback) {
         'teamId VARCHAR(20), ' +
         'runId VARCHAR(20), ' +
         'PRIMARY KEY(teamId ASC), ' +
-        'FOREIGN KEY(runId) REFERENCES runs(runId))', cb),
+        'FOREIGN KEY(runId) REFERENCES runs(runId) ON DELETE CASCADE)', cb),
     (cb) => db.query(
       'CREATE TABLE IF NOT EXISTS team_properties (' +
         'teamId VARCHAR(20), ' +
         'propertyKey VARCHAR(20), ' +
         'propertyValue BLOB, ' +
         'PRIMARY KEY(teamId, propertyKey), ' +
-        'FOREIGN KEY(teamId) REFERENCES teams(teamId))', cb),
+        'FOREIGN KEY(teamId) REFERENCES teams(teamId) ON DELETE CASCADE)', cb),
     (cb) => db.query(
       'CREATE TABLE IF NOT EXISTS puzzles (' +
         'puzzleId VARCHAR(40), ' +
@@ -49,16 +65,16 @@ function init(callback) {
         'timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, ' +
         'status VARCHAR(10) DEFAULT "' + status.Submission.DEFAULT.key + '", ' +
         'PRIMARY KEY(submissionId ASC), ' +
-        'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +
-        'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId))', cb),
+        'FOREIGN KEY(teamId) REFERENCES teams(teamId) ON DELETE CASCADE, ' +
+        'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId) ON DELETE CASCADE)', cb),
     (cb) => db.query(
       'CREATE TABLE IF NOT EXISTS visibilities (' +
         'teamId VARCHAR(20), ' +
         'puzzleId VARCHAR(20), ' +
         'status VARCHAR(10) DEFAULT "' + status.Visibility.DEFAULT.key + '", ' +
         'PRIMARY KEY(teamId, puzzleId), ' +
-        'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +
-        'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId))', cb),
+        'FOREIGN KEY(teamId) REFERENCES teams(teamId) ON DELETE CASCADE, ' +
+        'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId) ON DELETE CASCADE)', cb),
     (cb) => db.query(
       'CREATE TABLE IF NOT EXISTS visibility_history (' +
         'visibilityHistoryId INTEGER, ' +
@@ -67,22 +83,30 @@ function init(callback) {
         'status VARCHAR(10) DEFAULT "' + status.Visibility.DEFAULT.key + '", ' +
         'timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, ' +
         'PRIMARY KEY(visibilityHistoryId ASC), ' +
-        'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +
-        'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId))', cb),
-    // Insert some test data.
-    (cb) => db.query(
-      'INSERT INTO runs (runId) VALUES ("development")', cb),
-    (cb) => {
-      async.times(10, (i, cb) => {
-        var teamId = 'testerteam' + i;
-        db.query(
-          'INSERT INTO teams (teamId, runId) ' +
-            'VALUES (?, "development")',
-          [teamId],
-          cb);
-      }, cb);
-    }], callback);
+        'FOREIGN KEY(teamId) REFERENCES teams(teamId) ON DELETE CASCADE, ' +
+        'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId) ON DELETE CASCADE)', cb),
+    (cb) => insertTestData(cb)
+  ], callback);
 }
 module.exports.init = init;
 
-
+function reset(callback) {
+  var tables = [
+    'runs',
+    'teams',
+    'team_properties',
+    // Don't clear puzzles, it's populated once on startup by the hunt module.
+    'submissions',
+    'visibilities',
+    'visibility_history',
+  ];
+  async.series([
+    (cb) => {
+      async.each(tables, (table, cb) => {
+        db.query('DELETE FROM ' + table, cb);
+      }, cb);
+    },
+    insertTestData
+  ], callback);
+}
+module.exports.reset = reset;
