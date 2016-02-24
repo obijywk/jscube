@@ -1,11 +1,12 @@
 var async = require('async');
-var db = require('./db');
+var db = require('./db').db;
 
-module.exports.create = function(puzzleIds) {
+function createPuzzles(puzzleIds, callback) {
   async.each(puzzleIds, (puzzleId, cb) => {
-    db.run(
+    db.query(
       'INSERT OR IGNORE INTO puzzles (puzzleId) VALUES (?)',
       [puzzleId],
       cb);
-  });
+  }, callback);
 }
+module.exports.create = createPuzzles;

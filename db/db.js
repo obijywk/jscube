@@ -1,74 +1,88 @@
-var sqlite3 = require('sqlite3').verbose();
+var anyDb = require('any-db');
+var async = require('async');
+var config = require('config');
 var status = require('../util/status');
+var util = require('util');
 
-var db = new sqlite3.Database(':memory:');
+var db = anyDb.createConnection(config.get('jscube.db.url'));
+module.exports.db = db;
 
-db.serialize(() => {
-  db.run('PRAGMA foreign_keys = ON');
-  db.run(
-    'CREATE TABLE IF NOT EXISTS runs (' +
-      'runId VARCHAR(20), ' +
-      'startTimestamp DATETIME DEFAULT NULL, ' +
-      'PRIMARY KEY(runId ASC))');
-  db.run(
-    'CREATE TABLE IF NOT EXISTS teams (' +
-      'teamId VARCHAR(20), ' +
-      'runId VARCHAR(20), ' +
-      'PRIMARY KEY(teamId ASC), ' +
-      'FOREIGN KEY(runId) REFERENCES runs(runId))');
-  db.run(
-    'CREATE TABLE IF NOT EXISTS team_properties (' +
-      'teamId VARCHAR(20), ' +
-      'propertyKey VARCHAR(20), ' +
-      'propertyValue BLOB, ' +
-      'PRIMARY KEY(teamId, propertyKey), ' +
-      'FOREIGN KEY(teamId) REFERENCES teams(teamId))');
-  db.run(
-    'CREATE TABLE IF NOT EXISTS puzzles (' +
-      'puzzleId VARCHAR(40), ' +
-      'PRIMARY KEY(puzzleId ASC))');
-  db.run(
-    'CREATE TABLE IF NOT EXISTS submissions (' +
-      'submissionId INTEGER, ' +
-      'puzzleId VARCHAR(40), ' +
-      'teamId VARCHAR(20), ' +
-      'submission TEXT, ' +
-      'timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, ' +
-      'status VARCHAR(10) DEFAULT "' + status.Submission.DEFAULT.key + '", ' +
-      'PRIMARY KEY(submissionId ASC), ' +
-      'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +
-      'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId))');
-  db.run(
-    'CREATE TABLE IF NOT EXISTS visibilities (' +
-      'teamId VARCHAR(20), ' +
-      'puzzleId VARCHAR(20), ' +
-      'status VARCHAR(10) DEFAULT "' + status.Visibility.DEFAULT.key + '", ' +
-      'PRIMARY KEY(teamId, puzzleId), ' +
-      'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +
-      'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId))');
-  db.run(
-    'CREATE TABLE IF NOT EXISTS visibility_history (' +
-      'visibilityHistoryId INTEGER, ' +
-      'teamId VARCHAR(20), ' +
-      'puzzleId VARCHAR(20), ' +
-      'status VARCHAR(10) DEFAULT "' + status.Visibility.DEFAULT.key + '", ' +
-      'timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, ' +
-      'PRIMARY KEY(visibilityHistoryId ASC), ' +
-      'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +
-      'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId))');
+if (config.has('jscube.debug.sqlite')) {
+  require('sqlite3').verbose();
+  db.on('open', () => {
+    db._db.on('trace', (q) => util.log(q));
+  });
+}
 
-  // Insert some test data.
+function init(callback) {
+  async.series([
+    (cb) => db.query(
+      'PRAGMA foreign_keys = ON', cb),
+    (cb) => db.query(
+      'CREATE TABLE IF NOT EXISTS runs (' +
+        'runId VARCHAR(20), ' +
+        'startTimestamp DATETIME DEFAULT NULL, ' +
+        'PRIMARY KEY(runId ASC))', cb),
+    (cb) => db.query(
+      'CREATE TABLE IF NOT EXISTS teams (' +
+        'teamId VARCHAR(20), ' +
+        'runId VARCHAR(20), ' +
+        'PRIMARY KEY(teamId ASC), ' +
+        'FOREIGN KEY(runId) REFERENCES runs(runId))', cb),
+    (cb) => db.query(
+      'CREATE TABLE IF NOT EXISTS team_properties (' +
+        'teamId VARCHAR(20), ' +
+        'propertyKey VARCHAR(20), ' +
+        'propertyValue BLOB, ' +
+        'PRIMARY KEY(teamId, propertyKey), ' +
+        'FOREIGN KEY(teamId) REFERENCES teams(teamId))', cb),
+    (cb) => db.query(
+      'CREATE TABLE IF NOT EXISTS puzzles (' +
+        'puzzleId VARCHAR(40), ' +
+        'PRIMARY KEY(puzzleId ASC))', cb),
+    (cb) => db.query(
+      'CREATE TABLE IF NOT EXISTS submissions (' +
+        'submissionId INTEGER, ' +
+        'puzzleId VARCHAR(40), ' +
+        'teamId VARCHAR(20), ' +
+        'submission TEXT, ' +
+        'timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, ' +
+        'status VARCHAR(10) DEFAULT "' + status.Submission.DEFAULT.key + '", ' +
+        'PRIMARY KEY(submissionId ASC), ' +
+        'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +
+        'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId))', cb),
+    (cb) => db.query(
+      'CREATE TABLE IF NOT EXISTS visibilities (' +
+        'teamId VARCHAR(20), ' +
+        'puzzleId VARCHAR(20), ' +
+        'status VARCHAR(10) DEFAULT "' + status.Visibility.DEFAULT.key + '", ' +
+        'PRIMARY KEY(teamId, puzzleId), ' +
+        'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +
+        'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId))', cb),
+    (cb) => db.query(
+      'CREATE TABLE IF NOT EXISTS visibility_history (' +
+        'visibilityHistoryId INTEGER, ' +
+        'teamId VARCHAR(20), ' +
+        'puzzleId VARCHAR(20), ' +
+        'status VARCHAR(10) DEFAULT "' + status.Visibility.DEFAULT.key + '", ' +
+        'timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, ' +
+        'PRIMARY KEY(visibilityHistoryId ASC), ' +
+        'FOREIGN KEY(teamId) REFERENCES teams(teamId), ' +
+        'FOREIGN KEY(puzzleId) REFERENCES puzzles(puzzleId))', cb),
+    // Insert some test data.
+    (cb) => db.query(
+      'INSERT INTO runs (runId) VALUES ("development")', cb),
+    (cb) => {
+      async.times(10, (i, cb) => {
+        var teamId = 'testerteam' + i;
+        db.query(
+          'INSERT INTO teams (teamId, runId) ' +
+            'VALUES (?, "development")',
+          [teamId],
+          cb);
+      }, cb);
+    }], callback);
+}
+module.exports.init = init;
 
-  db.run('INSERT INTO runs (runId) VALUES ("development")');
 
-  var insertTeam = db.prepare(
-    'INSERT INTO teams (teamId, runId) ' +
-      'VALUES (?, "development")');
-  for (var i = 0; i < 10; i++) {
-    var teamId = 'testerteam' + i;
-    insertTeam.run(teamId);
-  }
-  insertTeam.finalize();
-});
-
-module.exports = db;

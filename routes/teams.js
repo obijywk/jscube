@@ -1,6 +1,6 @@
 var _ = require('underscore');
 var async = require('async');
-var db = require('../db/db');
+var db = require('../db/db').db;
 var express = require('express');
 
 var router = express.Router();
@@ -8,24 +8,27 @@ var router = express.Router();
 router.get('/:id', (req, res) => {
   async.parallel([
     (cb) => {
-      db.get(
+      db.query(
         'SELECT teamId, runId FROM teams WHERE teamId = ?',
-        [req.params.id], cb);
+        [req.params.id],
+        cb);
     },
     (cb) => {
-      db.all(
+      db.query(
         'SELECT propertyKey, propertyValue FROM team_properties WHERE teamId = ?',
-        [req.params.id], cb);
+        [req.params.id],
+        cb);
     }], (err, results) => {
       if (err) {
         return res.status(500).send(err.message);
       }
-      var resource = results[0];
-      if (resource === undefined) {
+      var resourceResult = results[0];
+      if (resourceResult.rowCount == 0) {
         return res.status(404).send('Team not found');
       }
-      _.each(results[1], (row) => {
-        resource[row.propertyKey] = JSON.parse(row.propertyValue);
+      var resource = resourceResult.rows[0];
+      _.each(results[1].rows, (row) => {
+        resource[row.propertyKey] = row.propertyValue;
       });
       res.json(resource);
     });

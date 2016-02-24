@@ -1,36 +1,36 @@
 var _ = require('underscore');
 var async = require('async');
-var db = require('./db');
+var db = require('./db').db;
 var eventEmitter = require('../events/emitter');
 var status = require('../util/status');
 
 function listSubmissions(cb) {
-  db.all(
+  db.query(
     'SELECT * FROM submissions',
-    [],
-    (err, rows) => {
+    (err, result) => {
       if (err) {
         return cb(err);
       }
-      _.each(rows, (row) => {
+      _.each(result.rows, (row) => {
         row.status = status.Submission.get(row.status);
       });
-      return cb(null, rows);
+      return cb(null, result.rows);
     });
 }
 module.exports.list = listSubmissions;
 
 function getSubmission(submissionId, cb) {
-  db.get(
+  db.query(
     'SELECT * FROM submissions WHERE submissionId = ?',
     [submissionId],
-    (err, row) => {
+    (err, result) => {
       if (err) {
         return cb(err);
       }
-      if (row === undefined) {
+      if (result.rowCount == 0) {
         return cb(new Error('Submission id ' + submissionId + ' not found'));
       }
+      var row = result.rows[0];
       row.status = status.Submission.get(row.status);
       return cb(null, row);
     });
@@ -38,7 +38,7 @@ function getSubmission(submissionId, cb) {
 module.exports.get = getSubmission;
 
 function createSubmission(teamId, puzzleId, submission, cb) {
-  db.run(
+  db.query(
     'INSERT INTO submissions (teamId, puzzleId, submission, timestamp) ' +
       'VALUES (?,?,?,?)',
     [teamId, puzzleId, submission, Date.now()],
@@ -49,14 +49,14 @@ module.exports.create = createSubmission;
 function updateSubmissionStatus(submissionId, submissionStatus, callback) {
   async.waterfall([
     (cb) => {
-      db.run(
+      db.query(
         'UPDATE submissions SET status = ? WHERE submissionId = ? AND status <> ?',
         [submissionStatus.key, submissionId, submissionStatus.key],
-        function(err) {
+        (err, result) => {
           if (err) {
             return cb(err);
           }
-          return cb(null, this.changes > 0);
+          return cb(null, result.rowCount > 0);
         });
     },
     (changed, cb) => {

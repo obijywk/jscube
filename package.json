@@ -12,6 +12,8 @@
   },
   "homepage": "https://github.com/obijywk/jscube#readme",
   "dependencies": {
+    "any-db": "^2.1.0",
+    "any-db-sqlite3": "^2.1.4",
     "async": "^1.5.2",
     "body-parser": "^1.15.0",
     "config": "^1.19.0",

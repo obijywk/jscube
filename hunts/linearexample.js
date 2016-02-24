@@ -4,15 +4,18 @@ var dbVisibility = require('../db/visibility');
 var eventEmitter = require('../events/emitter');
 var status = require('../util/status');
 
-dbPuzzles.create([
-  'puzzle1',
-  'puzzle2',
-  'puzzle3',
-  'puzzle4',
-  'puzzle5',
-  'puzzle6',
-  'puzzle7',
-]);
+function init(callback) {
+  dbPuzzles.create([
+    'puzzle1',
+    'puzzle2',
+    'puzzle3',
+    'puzzle4',
+    'puzzle5',
+    'puzzle6',
+    'puzzle7',
+  ], callback);
+}
+module.exports.init = init;
 
 eventEmitter.on('HuntStart', (params) => {
   dbTeams.forEachTeamId(params.runId, (teamId) => {

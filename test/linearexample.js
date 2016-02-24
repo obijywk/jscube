@@ -1,6 +1,10 @@
-var app = require('../app').app;
+var appModule = require('../app');
+var app = appModule.app;
 var assert = require('chai').assert;
 var request = require('supertest');
+var testutil = require('./util');
+
+before(testutil.awaitInitialized(appModule));
 
 describe('LinearExample hunt', function() {
   it('puzzle1 is locked', function(done) {

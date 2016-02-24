@@ -1,21 +1,21 @@
 var _ = require('underscore');
 var async = require('async');
-var db = require('./db');
+var db = require('./db').db;
 var eventEmitter = require('../events/emitter');
 var status = require('../util/status');
 
 function getVisibility(teamId, puzzleId, cb) {
-  db.get(
+  db.query(
     'SELECT status FROM visibilities WHERE teamId = ? AND puzzleId = ?',
     [teamId, puzzleId],
-    (err, row) => {
+    (err, result) => {
       if (err) {
         return cb(err);
       }
-      if (!row) {
+      if (result.rowCount == 0) {
         return cb(null, status.Visibility.DEFAULT);
       }
-      return cb(null, status.Visibility.get(row.status));
+      return cb(null, status.Visibility.get(result.rows[0].status));
     });
 }
 module.exports.get = getVisibility;
@@ -24,28 +24,28 @@ function updateVisibility(teamId, puzzleId, visibility, callback) {
   async.waterfall([
     (cb) => {
       // Create row with default visibility status, if it doesn't already exist.
-      db.run(
+      db.query(
         'INSERT OR IGNORE INTO visibilities (teamId, puzzleId) ' +
           'VALUES (?, ?)',
         [teamId, puzzleId],
         cb);
     },
-    (cb) => {
+    (result, cb) => {
       var allowedAntecedents = _.pluck(visibility.allowedAntecedents, 'key');
       var antecedentCondition = _.map(
         allowedAntecedents,
         (value) => { return 'status = "' + value + '"'; })
         .join(' OR ');
-      db.run(
+      db.query(
         'UPDATE visibilities SET status = ? ' +
           'WHERE teamId = ? AND puzzleId = ? AND (' +
           antecedentCondition + ')',
         [visibility.key, teamId, puzzleId],
-        function(err) {
+        (err, result) => {
           if (err) {
             return cb(err);
           }
-          return cb(null, this.changes > 0);
+          return cb(null, result.rowCount > 0);
         });
     },
     (changed, cb) => {
@@ -55,7 +55,7 @@ function updateVisibility(teamId, puzzleId, visibility, callback) {
           'puzzleId': puzzleId,
           'status': visibility,
         });
-        db.run(
+        db.query(
           'INSERT INTO visibility_history ' +
             '(teamId, puzzleId, status, timestamp) ' +
             'VALUES (?, ?, ?, ?)',
@@ -63,9 +63,8 @@ function updateVisibility(teamId, puzzleId, visibility, callback) {
           (err) => {
             if (err) {
               return cb(err);
-            } else {
-              return cb(null, true);
             }
+            return cb(null, true);
           });
       } else {
         return cb(null, false);

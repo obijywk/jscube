@@ -1,9 +1,12 @@
 {
   "jscube": {
-    "port": 8080,
-    "eventHandlers": [
+    "db": {
+      "url": "sqlite3://:memory:"
+    },
+    "huntModules": [
       "./events/core",
       "./hunts/huntception"
-    ]
+    ],
+    "port": 8080
   }
 }

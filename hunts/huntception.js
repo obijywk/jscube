@@ -1,5 +1,5 @@
 var _ = require('underscore');
-var db = require('../db/db');
+var db = require('../db/db').db;
 var dbPuzzles = require('../db/puzzles');
 var dbTeams = require('../db/teams');
 var dbVisibility = require('../db/visibility');
@@ -7,16 +7,19 @@ var eventEmitter = require('../events/emitter');
 var moment = require('moment');
 var status = require('../util/status');
 
-dbPuzzles.create([
-  'dog_show',
-  'you_complete_me',
-  'rip_van_winkle',
-  'crimes_against_cruciverbalism',
-  'dreamtime',
-  'dreamtime_day_one',
-  'dreamtime_day_two',
-  'dreamtime_day_three',
-]);
+function init(callback) {
+  dbPuzzles.create([
+    'dog_show',
+    'you_complete_me',
+    'rip_van_winkle',
+    'crimes_against_cruciverbalism',
+    'dreamtime',
+    'dreamtime_day_one',
+    'dreamtime_day_two',
+    'dreamtime_day_three',
+  ], callback);
+}
+module.exports.init = init;
 
 eventEmitter.on('HuntStart', (params) => {
   dbTeams.forEachTeamId(params.runId, (teamId) => {
@@ -103,13 +106,13 @@ function processTimedUnlocks(runId, startTimestamp) {
 
 setInterval(() => {
   // TODO: don't keep processing all old runs forever
-  db.all(
+  db.query(
     'SELECT runId, startTimestamp FROM runs',
-    (err, rows) => {
+    (err, result) => {
       if (err) {
-        return console.log('Failed to read run start timestamps: ' + err);
+        throw err;
       }
-      _.each(rows, (row) => {
+      _.each(result.rows, (row) => {
         if (!row.startTimestamp) {
           return;
         }
