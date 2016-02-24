@@ -4,6 +4,7 @@ var assert = require('chai').assert;
 var async = require('async');
 var db = require('../db/db');
 var request = require('supertest');
+var status = require('../util/status');
 var testUtil = require('./util');
 
 before(testUtil.awaitInitialized(appModule));
@@ -41,9 +42,8 @@ describe('submissions', function() {
             puzzleId: 'puzzle1',
             runId: 'development',
           })
-          .expect(200, () => {
-            setTimeout(cb, 10);
-          });
+          .expect(200, testUtil.awaitVisibility(
+            'testerteam1', 'puzzle1', status.Visibility.UNLOCKED, cb));
       },
       (cb) => {
         request(app)

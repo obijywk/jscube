@@ -3,6 +3,7 @@ var app = appModule.app;
 var assert = require('chai').assert;
 var db = require('../db/db');
 var request = require('supertest');
+var status = require('../util/status');
 var testUtil = require('./util');
 
 before(testUtil.awaitInitialized(appModule));
@@ -28,7 +29,8 @@ describe('LinearExample hunt', function() {
       .end(function(err, res) {
         if (err) return done(err);
         assert.deepEqual(res.body, event);
-        setTimeout(done, 10);
+        testUtil.awaitVisibility(
+          'testerteam1', 'puzzle1', status.Visibility.UNLOCKED, done)();
       });
   });
   it('submit puzzle1', function(done) {
@@ -57,9 +59,8 @@ describe('LinearExample hunt', function() {
       .send({
         status: 'CORRECT',
       })
-      .expect(200, () => {
-        setTimeout(done, 10);
-      });
+      .expect(200, testUtil.awaitVisibility(
+        'testerteam1', 'puzzle2', status.Visibility.UNLOCKED, done));
   });
   it('submit puzzle2', function(done) {
     request(app)
