@@ -3,6 +3,7 @@ var async = require('async');
 var bodyParser = require('body-parser');
 var config = require('config');
 var db = require('./db/db');
+var errorUtil = require('./util/error');
 var express = require('express');
 var morgan = require('morgan');
 var util = require('util');
@@ -36,11 +37,7 @@ async.series([
     // Exported for tests.
     module.exports.initialized = true;
     cb(null);
-  }], (err) => {
-    if (err) {
-      throw err;
-    }
-  });
+  }], errorUtil.thrower);
 
 // Exported for tests.
 module.exports.app = app;

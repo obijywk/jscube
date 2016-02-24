@@ -2,6 +2,7 @@ var async = require('async');
 var db = require('../db/db').db;
 var dbTeams = require('../db/teams');
 var dbVisibility = require('../db/visibility');
+var errorUtil = require('../util/error');
 var eventEmitter = require('./emitter');
 var status = require('../util/status');
 var util = require('util');
@@ -12,9 +13,7 @@ eventEmitter.on('HuntStart', (params) => {
       'WHERE runId = ? AND startTimestamp IS NULL',
     [Date.now(), params.runId],
     (err, result) => {
-      if (err) {
-        throw err;
-      }
+      errorUtil.thrower(err);
       if (result.rowCount == 0) {
         util.log('HuntStart did not cause an update');
       }
@@ -29,11 +28,7 @@ eventEmitter.on('SubmissionComplete', (submission) => {
     submission.teamId,
     submission.puzzleId,
     status.Visibility.SOLVED,
-    (err) => {
-      if (err) {
-        throw err;
-      }
-    });
+    errorUtil.thrower);
 });
 
 eventEmitter.on('FullRelease', (params) => {
@@ -42,10 +37,6 @@ eventEmitter.on('FullRelease', (params) => {
       teamId,
       params.puzzleId,
       status.Visibility.UNLOCKED,
-      (err) => {
-        if (err) {
-          throw err;
-        }
-      });
+      errorUtil.thrower);
   });
 });

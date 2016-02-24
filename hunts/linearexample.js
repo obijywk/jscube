@@ -1,6 +1,7 @@
 var dbPuzzles = require('../db/puzzles');
 var dbTeams = require('../db/teams');
 var dbVisibility = require('../db/visibility');
+var errorUtil = require('../util/error');
 var eventEmitter = require('../events/emitter');
 var status = require('../util/status');
 
@@ -23,11 +24,7 @@ eventEmitter.on('HuntStart', (params) => {
       teamId,
       'puzzle1',
       status.Visibility.UNLOCKED,
-      (err) => {
-        if (err) {
-          throw err;
-        }
-      });
+      errorUtil.thrower);
   });
 });
 
@@ -52,9 +49,5 @@ eventEmitter.on('VisibilityChange', (visibility) => {
     visibility.teamId,
     puzzleIdToUnlock,
     status.Visibility.UNLOCKED,
-    (err) => {
-      if (err) {
-        throw err;
-      }
-    });
+    errorUtil.thrower);
 });

@@ -2,9 +2,9 @@ var appModule = require('../app');
 var app = appModule.app;
 var assert = require('chai').assert;
 var request = require('supertest');
-var testutil = require('./util');
+var testUtil = require('./util');
 
-before(testutil.awaitInitialized(appModule));
+before(testUtil.awaitInitialized(appModule));
 
 describe('GET /submissions', function() {
   it('respond with empty list', function(done) {

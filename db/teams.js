@@ -1,5 +1,6 @@
 var _ = require('underscore');
 var db = require('./db').db;
+var errorUtil = require('../util/error');
 var util = require('util');
 
 module.exports.forEachTeamId = function(runId, cb) {
@@ -7,9 +8,7 @@ module.exports.forEachTeamId = function(runId, cb) {
     'SELECT teamId FROM teams WHERE runId = ?',
     [runId],
     (err, result) => {
-      if (err) {
-        throw err;
-      }
+      errorUtil.thrower(err);
       _.each(_.pluck(result.rows, 'teamId'), cb);
     });
 }
