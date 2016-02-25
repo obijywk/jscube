@@ -4,6 +4,32 @@ var db = require('./db').db;
 var eventEmitter = require('../events/emitter');
 var status = require('../util/status');
 
+function listVisibilities(teamId, puzzleId, cb) {
+  var query = 'SELECT teamId, puzzleId, status FROM visibilities';
+  var params = [];
+  if (teamId != null && puzzleId != null) {
+    query += ' WHERE teamId = ? AND puzzleId = ?';
+    params.push(teamId);
+    params.push(puzzleId);
+  } else if (teamId != null) {
+    query += ' WHERE teamId = ?';
+    params.push(teamId);
+  } else if (puzzleId != null) {
+    query += ' WHERE puzzleId = ?';
+    params.push(puzzleId);
+  }
+  db.query(query, params, (err, result) => {
+    if (err) {
+      return cb(err);
+    }
+    _.each(result.rows, (row) => {
+      row.status = status.Visibility.get(row.status);
+    });
+    return cb(null, result.rows);
+  });
+}
+module.exports.list = listVisibilities;
+
 function getVisibility(teamId, puzzleId, cb) {
   db.query(
     'SELECT status FROM visibilities WHERE teamId = ? AND puzzleId = ?',

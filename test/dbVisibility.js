@@ -2,13 +2,15 @@ var assert = require('chai').assert;
 var async = require('async');
 var db = require('../db/db');
 var dbVisibility = require('../db/visibility');
-var errorUtil = require('../util/error');
 var eventEmitter = require('../events/emitter');
+var linearexample = require('../hunts/linearexample');
 var sinon = require('sinon');
 var status = require('../util/status');
 
 describe('DB visibility', function() {
-  before(db.reset);
+  before(db.init);
+  before(linearexample.init);
+  after(db.clear);
 
   var eventVerifier;
   beforeEach(function() {
@@ -23,7 +25,7 @@ describe('DB visibility', function() {
   it('is initially default', function(done) {
     eventVerifier.never();
     dbVisibility.get('testerteam1', 'puzzle1', (err, visibility) => {
-      errorUtil.thrower(err);
+      if (err) return done(err);
       assert.equal(visibility, status.Visibility.DEFAULT);
       done();
     });
@@ -51,10 +53,7 @@ describe('DB visibility', function() {
         assert.equal(visibility, status.Visibility.UNLOCKED);
         cb(null);
       },
-    ], (err) => {
-      errorUtil.thrower(err);
-      done();
-    });
+    ], done);
   });
 
   it('no-change update', function(done) {
@@ -75,8 +74,29 @@ describe('DB visibility', function() {
         assert.equal(visibility, status.Visibility.UNLOCKED);
         cb(null);
       },
-    ], (err) => {
-      errorUtil.thrower(err);
+    ], done);
+  });
+
+  it('list with no parameters', function(done) {
+    eventVerifier.never();
+    dbVisibility.list(null, null, (err, visibilities) => {
+      if (err) return done(err);
+      assert.deepEqual(visibilities, [
+        {
+          teamId: 'testerteam1',
+          puzzleId: 'puzzle1',
+          status: status.Visibility.UNLOCKED,
+        },
+      ]);
+      done();
+    });
+  });
+
+  it('list with parameters and no results', function(done) {
+    eventVerifier.never();
+    dbVisibility.list('testerteam2', null, (err, visibilities) => {
+      if (err) return done(err);
+      assert.deepEqual(visibilities, []);
       done();
     });
   });

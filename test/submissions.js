@@ -1,16 +1,18 @@
-var appModule = require('../app');
-var app = appModule.app;
+var app = require('../app').app;
 var assert = require('chai').assert;
 var async = require('async');
+var core = require('../events/core');
 var db = require('../db/db');
+var linearexample = require('../hunts/linearexample');
 var request = require('supertest');
 var status = require('../util/status');
 var testUtil = require('./util');
 
-before(testUtil.awaitInitialized(appModule));
-
 describe('submissions', function() {
-  before(db.reset);
+  before(db.init);
+  before(linearexample.init);
+  after(db.clear);
+
   it('are initially empty', function(done) {
     request(app)
       .get('/submissions')

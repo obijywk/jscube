@@ -90,23 +90,18 @@ function init(callback) {
 }
 module.exports.init = init;
 
-function reset(callback) {
+function clear(callback) {
   var tables = [
     'runs',
     'teams',
     'team_properties',
-    // Don't clear puzzles, it's populated once on startup by the hunt module.
+    'puzzles',
     'submissions',
     'visibilities',
     'visibility_history',
   ];
-  async.series([
-    (cb) => {
-      async.each(tables, (table, cb) => {
-        db.query('DELETE FROM ' + table, cb);
-      }, cb);
-    },
-    insertTestData
-  ], callback);
+  async.each(tables, (table, cb) => {
+    db.query('DELETE FROM ' + table, cb);
+  }, callback);
 }
-module.exports.reset = reset;
+module.exports.clear = clear;

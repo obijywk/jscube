@@ -17,27 +17,27 @@ app.use(bodyParser.json());
 app.use('/events', require('./routes/events'));
 app.use('/submissions', require('./routes/submissions'));
 app.use('/teams', require('./routes/teams'));
+app.use('/visibilities', require('./routes/visibilities'));
 
-var port = config.get('jscube.port');
-
-async.series([
-  db.init,
-  (cb) => {
-    async.each(config.get('jscube.huntModules'), (module, cb) => {
-      var m = require(module);
-      if (m.init) {
-        return m.init(cb);
-      }
-      return cb(null);
-    }, cb);
-  },
-  (cb) => app.listen(port, cb),
-  (cb) => {
-    util.log('Listening on port ' + port);
-    // Exported for tests.
-    module.exports.initialized = true;
-    cb(null);
-  }], errorUtil.thrower);
+if (require.main === module) {
+  var port = config.get('jscube.port');
+  async.series([
+    db.init,
+    (cb) => {
+      async.each(config.get('jscube.huntModules'), (module, cb) => {
+        var m = require(module);
+        if (m.init) {
+          return m.init(cb);
+        }
+        return cb(null);
+      }, cb);
+    },
+    (cb) => app.listen(port, cb),
+    (cb) => {
+      util.log('Listening on port ' + port);
+      cb(null);
+    }], errorUtil.thrower);
+}
 
 // Exported for tests.
 module.exports.app = app;

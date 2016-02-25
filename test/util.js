@@ -1,18 +1,6 @@
 var dbVisibility = require('../db/visibility');
 var errorUtil = require('../util/error');
 
-function awaitInitialized(module) {
-  return function(done) {
-    var checker = setInterval(() => {
-      if (module.initialized) {
-        clearInterval(checker);
-        done();
-      }
-    }, 1);
-  }
-}
-module.exports.awaitInitialized = awaitInitialized;
-
 function awaitVisibility(teamId, puzzleId, visibility, cb) {
   return function() {
     var checkRunning = false;

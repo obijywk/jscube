@@ -1,15 +1,17 @@
-var appModule = require('../app');
-var app = appModule.app;
+var app = require('../app').app;
 var assert = require('chai').assert;
+var core = require('../events/core');
 var db = require('../db/db');
+var linearexample = require('../hunts/linearexample');
 var request = require('supertest');
 var status = require('../util/status');
 var testUtil = require('./util');
 
-before(testUtil.awaitInitialized(appModule));
-
 describe('LinearExample hunt', function() {
-  before(db.reset);
+  before(db.init);
+  before(linearexample.init);
+  after(db.clear);
+
   it('puzzle1 is locked', function(done) {
     request(app)
       .post('/submissions')
