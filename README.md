@@ -24,6 +24,7 @@ curl -d '{"eventType":"HuntStart","runId":"development"}' -H "Content-Type: appl
 
 ```
 npm test
+npm run coverage
 ```
 
 ## How to build documentation
