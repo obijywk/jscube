@@ -15,8 +15,8 @@ function init(callback) {
 }
 module.exports.init = init;
 
-eventEmitter.on('HuntStart', (params) => {
-  unlock.forAllTeams(params.runId, 'puzzle1');
+eventEmitter.on('HuntStart', (event) => {
+  unlock.forAllTeams(event.runId, 'puzzle1');
 });
 
 unlock.onSolve({

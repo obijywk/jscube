@@ -1,9 +1,12 @@
 var _ = require('underscore');
+var async = require('async');
 var db = require('../db/db').db;
 var dbPuzzles = require('../db/puzzles');
+var dbVisibility = require('../db/visibility');
 var errorUtil = require('../util/error');
 var eventEmitter = require('../events/emitter');
 var moment = require('moment');
+var status = require('../util/status');
 var unlock = require('../util/unlock');
 
 function init(callback) {
@@ -16,12 +19,13 @@ function init(callback) {
     'dreamtime_day_one',
     'dreamtime_day_two',
     'dreamtime_day_three',
+    'limbo',
   ], callback);
 }
 module.exports.init = init;
 
-eventEmitter.on('HuntStart', (params) => {
-  unlock.forAllTeams(params.runId, 'dog_show');
+eventEmitter.on('HuntStart', (event) => {
+  unlock.forAllTeams(event.runId, 'dog_show');
 });
 
 unlock.onUnlock({
@@ -32,6 +36,33 @@ unlock.onUnlock({
 
 unlock.onSolve({
   'dog_show': ['rip_van_winkle'],
+});
+
+// Limbo unlocker.
+var metas = [
+  'dog_show',
+  'rip_van_winkle',
+  'dreamtime',
+];
+eventEmitter.on('VisibilityChange', (event) => {
+  if (event.status != status.Visibility.SOLVED) {
+    return;
+  }
+  if (!_.contains(metas, event.puzzleId)) {
+    return;
+  }
+  async.map(metas, (metaId, cb) => {
+    dbVisibility.get(event.teamId, metaId, cb);
+  }, (err, statuses) => {
+    errorUtil.thrower(err);
+    if (_.every(statuses, (s) => s == status.Visibility.SOLVED)) {
+      dbVisibility.update(
+        event.teamId,
+        'limbo',
+        status.Visibility.UNLOCKED,
+        errorUtil.thrower);
+    }
+  });
 });
 
 // All times are offsets from the hunt start time.
