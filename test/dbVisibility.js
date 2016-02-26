@@ -33,6 +33,7 @@ describe('DB visibility', function() {
 
   it('update causes write and event', function(done) {
     eventVerifier.once().withArgs({
+      eventType: 'VisibilityChange',
       teamId: 'testerteam1',
       puzzleId: 'puzzle1',
       status: status.Visibility.UNLOCKED,

@@ -4,9 +4,9 @@ var dbTeams = require('../db/teams');
 var dbVisibility = require('../db/visibility');
 var errorUtil = require('../util/error');
 var eventEmitter = require('./emitter');
+var log = require('bristol');
 var status = require('../util/status');
 var unlock = require('../util/unlock');
-var util = require('util');
 
 eventEmitter.on('HuntStart', (params) => {
   db.query(
@@ -16,7 +16,7 @@ eventEmitter.on('HuntStart', (params) => {
     (err, result) => {
       errorUtil.thrower(err);
       if (result.rowCount == 0) {
-        util.log('HuntStart did not cause an update');
+        log.warn('HuntStart did not cause an update');
       }
     });
 });

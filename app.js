@@ -5,13 +5,25 @@ var config = require('config');
 var db = require('./db/db');
 var errorUtil = require('./util/error');
 var express = require('express');
-var morgan = require('morgan');
-var util = require('util');
+var log = require('bristol');
+
+if (config.has('jscube.logging.console') &&
+    config.get('jscube.logging.console')) {
+  log.addTarget('console').withFormatter('human');
+}
 
 var app = express();
 
-app.use(morgan(
-  ':date[iso] :remote-addr :remote-user :method :url :status :res[content-length] - :response-time ms'));
+app.use((req, res, next) => {
+  log.info('Request', {
+    ip: req.ip,
+    method: req.method,
+    url: req.originalUrl || req.url,
+    status: res.statusCode,
+  });
+  next();
+});
+
 app.use(bodyParser.json());
 
 app.use('/events', require('./routes/events'));
@@ -34,7 +46,7 @@ if (require.main === module) {
     },
     (cb) => app.listen(port, cb),
     (cb) => {
-      util.log('Listening on port ' + port);
+      log.info('Listening', {port: port});
       cb(null);
     }], errorUtil.thrower);
 }

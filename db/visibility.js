@@ -77,6 +77,7 @@ function updateVisibility(teamId, puzzleId, visibility, callback) {
     (changed, cb) => {
       if (changed) {
         eventEmitter.emit('VisibilityChange', {
+          'eventType': 'VisibilityChange',
           'teamId': teamId,
           'puzzleId': puzzleId,
           'status': visibility,

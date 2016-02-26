@@ -3,13 +3,12 @@
     "db": {
       "url": "sqlite3://:memory:"
     },
-    "debug": {
-      "sqlite": true
-    },
     "huntModules": [
       "./events/core",
       "./hunts/linearexample"
     ],
-    "port": 8080
+    "logging": {
+      "console": false
+    }
   }
 }

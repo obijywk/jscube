@@ -1,8 +1,8 @@
 var anyDb = require('any-db');
 var async = require('async');
 var config = require('config');
+var log = require('bristol');
 var status = require('../util/status');
-var util = require('util');
 
 var db = anyDb.createConnection(config.get('jscube.db.url'));
 module.exports.db = db;
@@ -10,7 +10,7 @@ module.exports.db = db;
 if (config.has('jscube.debug.sqlite')) {
   require('sqlite3').verbose();
   db.on('open', () => {
-    db._db.on('trace', (q) => util.log(q));
+    db._db.on('trace', (q) => log.trace('Query', {query: q}));
   });
 }
 

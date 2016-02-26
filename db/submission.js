@@ -65,6 +65,7 @@ function updateSubmissionStatus(submissionId, submissionStatus, callback) {
           if (err) {
             return cb(err);
           }
+          submission.eventType = 'SubmissionComplete';
           eventEmitter.emit('SubmissionComplete', submission);
           return cb(null, true);
         });

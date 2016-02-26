@@ -16,11 +16,11 @@
     "any-db-sqlite3": "^2.1.4",
     "async": "^1.5.2",
     "body-parser": "^1.15.0",
+    "bristol": "^0.3.3",
     "config": "^1.19.0",
     "enum": "^2.3.0",
     "express": "^4.13.4",
     "moment": "^2.11.2",
-    "morgan": "^1.7.0",
     "sqlite3": "^3.1.1",
     "underscore": "^1.8.3"
   },
@@ -36,6 +36,7 @@
     "coverage": "NODE_ENV=unittest istanbul cover node_modules/mocha/bin/_mocha test/",
     "jsdoc": "jsdoc -c jsdoc_conf.json -d docs -r .",
     "start": "node app.js",
-    "test": "NODE_ENV=unittest mocha test/"
+    "test": "NODE_ENV=unittest mocha test/",
+    "testdebug": "NODE_ENV=unittestdebug mocha test/"
   }
 }
