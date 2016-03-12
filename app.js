@@ -14,6 +14,11 @@ if (config.has('jscube.logging.console') &&
 
 var app = express();
 
+if (config.has('jscube.cors')) {
+  var corsOptions = JSON.parse(JSON.stringify(config.get('jscube.cors')));
+  app.use(require('cors')(corsOptions));
+}
+
 app.use((req, res, next) => {
   log.info('Request', {
     ip: req.ip,
