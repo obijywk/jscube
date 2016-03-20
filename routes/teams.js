@@ -5,6 +5,17 @@ var express = require('express');
 
 var router = express.Router();
 
+router.get('/', (req, res) => {
+  db.query('SELECT * FROM teams', (err, result) => {
+    if (err) {
+      return res.status(500).send(err.message);
+    }
+    res.json({
+      'teams': result.rows,
+    });
+  });
+});
+
 router.get('/:id', (req, res) => {
   async.parallel([
     (cb) => {
