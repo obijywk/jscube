@@ -37,3 +37,6 @@ docs
 
 # Code coverage
 coverage
+
+# Local configuration
+config/local*
