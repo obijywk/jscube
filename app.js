@@ -35,6 +35,7 @@ app.use('/events', require('./routes/events'));
 app.use('/submissions', require('./routes/submissions'));
 app.use('/teams', require('./routes/teams'));
 app.use('/visibilities', require('./routes/visibilities'));
+app.use('/visibilityhistory', require('./routes/visibilityhistory'));
 
 if (require.main === module) {
   var port = config.get('jscube.port');

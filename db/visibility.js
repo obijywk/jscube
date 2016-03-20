@@ -30,6 +30,39 @@ function listVisibilities(teamId, puzzleId, cb) {
 }
 module.exports.list = listVisibilities;
 
+function listVisibilityHistory(teamId, puzzleId, queryStatus, cb) {
+  var query = 'SELECT teamId, puzzleId, status, timestamp FROM visibility_history';
+  if (teamId != null || puzzleId != null || queryStatus != null) {
+    query += ' WHERE ';
+    var params = [];
+    var whereClauses = [];
+    if (teamId != null) {
+      whereClauses.push('teamId = ?');
+      params.push(teamId);
+    }
+    if (puzzleId != null) {
+      whereClauses.push('puzzleId = ?');
+      params.push(puzzleId);
+    }
+    if (queryStatus != null) {
+      whereClauses.push('status = ?');
+      params.push(queryStatus.key);
+    }
+    query += whereClauses.join(' AND ');
+  }
+  query += ' ORDER BY timestamp';
+  db.query(query, params, (err, result) => {
+    if (err) {
+      return cb(err);
+    }
+    _.each(result.rows, (row) => {
+      row.status = status.Visibility.get(row.status);
+    });
+    return cb(null, result.rows);
+  });
+}
+module.exports.listHistory = listVisibilityHistory;
+
 function getVisibility(teamId, puzzleId, cb) {
   db.query(
     'SELECT status FROM visibilities WHERE teamId = ? AND puzzleId = ?',
